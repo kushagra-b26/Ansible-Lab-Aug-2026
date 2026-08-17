@@ -1,0 +1,48 @@
+---
+- name: Get hostname and IP info from Check Point devices
+  hosts: checkpoint
+  gather_facts: no
+  connection: local
+
+  vars:
+    cp_user: admin
+    cp_pass: admin123
+
+  tasks:
+    - name: Get hostname
+      ansible.builtin.raw: >
+        sshpass -p '{{ cp_pass }}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {{ cp_user }}@{{ ansible_host }} "show hostname"
+      register: cp_hostname
+      changed_when: false
+
+    - name: Get IP address (eth0)
+      ansible.builtin.raw: >
+        sshpass -p '{{ cp_pass }}' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {{ cp_user }}@{{ ansible_host }} "show interface eth0"
+      register: cp_interfaces
+      changed_when: false
+
+    - name: Display hostname
+      ansible.builtin.debug:
+        msg: "{{ cp_hostname.stdout_lines }}"
+
+    - name: Display IP address
+      ansible.builtin.debug:
+        msg: "{{ cp_interfaces.stdout_lines | select('search', 'ipv4-address') | list }}"
+
+    - name: Create CSV header (once)
+      ansible.builtin.copy:
+        content: "Hostname,IP Address\n"
+        dest: "{{ playbook_dir }}/checkpoint_inventory.csv"
+      run_once: true
+      delegate_to: localhost
+
+    - name: Extract clean IP address
+      ansible.builtin.set_fact:
+        cp_ip_clean: "{{ cp_interfaces.stdout | regex_search('ipv4-address\\s+(\\S+)', '\\1') | first }}"
+
+    - name: Append hostname and IP to CSV
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/checkpoint_inventory.csv"
+        line: "{{ cp_hostname.stdout | trim }},{{ cp_ip_clean }}"
+        insertafter: EOF
+      delegate_to: localhost

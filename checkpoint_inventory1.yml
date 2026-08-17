@@ -1,0 +1,82 @@
+---
+# checkpoint_inventory1.yml
+# Retrieves IP addresses, IPsec certificates, and license info
+
+- name: Gather VPN Info from Check Point Gateways
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    gateways:
+      - name: "CP-1"
+        host: "192.168.1.100"
+      - name: "CP-2"
+        host: "192.168.1.200"
+    sms_host: "192.168.1.50"
+    cp_user: "admin"
+    cp_pass: "admin123"
+
+  tasks:
+
+    # ────────────────────────────────────────────
+    # 1. IP ADDRESS (from gateways)
+    # ────────────────────────────────────────────
+    - name: Get eth0 IP from gateways
+      shell: |
+        sshpass -p "{{ cp_pass }}" ssh -o StrictHostKeyChecking=no -tt {{ cp_user }}@{{ item.host }} "show interface eth0"
+      register: eth0_results
+      loop: "{{ gateways }}"
+      ignore_errors: true
+
+    - name: Get eth1 IP from gateways
+      shell: |
+        sshpass -p "{{ cp_pass }}" ssh -o StrictHostKeyChecking=no -tt {{ cp_user }}@{{ item.host }} "show interface eth1"
+      register: eth1_results
+      loop: "{{ gateways }}"
+      ignore_errors: true
+
+    - name: Display eth0 IP info
+      debug:
+        msg: |
+          ===== {{ item.item.name }} — eth0 =====
+          {{ item.stdout | default('UNREACHABLE') }}
+      loop: "{{ eth0_results.results }}"
+
+    - name: Display eth1 IP info
+      debug:
+        msg: |
+          ===== {{ item.item.name }} — eth1 =====
+          {{ item.stdout | default('UNREACHABLE') }}
+      loop: "{{ eth1_results.results }}"
+
+    # ────────────────────────────────────────────
+    # 2. IPSEC CERTIFICATES (from SMS — issued to all gateways)
+    # ────────────────────────────────────────────
+    - name: Get IPsec certificate list from SMS
+      shell: |
+        sshpass -p "{{ cp_pass }}" ssh -o StrictHostKeyChecking=no -tt {{ cp_user }}@{{ sms_host }} "cpca_client lscert"
+      register: cert_results
+      ignore_errors: true
+
+    - name: Display IPsec cert info from SMS
+      debug:
+        msg: |
+          ===== SMS — All Issued IPsec/SIC Certificates =====
+          {{ cert_results.stdout | default('UNREACHABLE') }}
+
+    # ────────────────────────────────────────────
+    # 3. FIREWALL LICENSE (from gateways)
+    # ────────────────────────────────────────────
+    - name: Get license info from gateways
+      shell: |
+        sshpass -p "{{ cp_pass }}" ssh -o StrictHostKeyChecking=no -tt {{ cp_user }}@{{ item.host }} "cplic print"
+      register: license_results
+      loop: "{{ gateways }}"
+      ignore_errors: true
+
+    - name: Display license info
+      debug:
+        msg: |
+          ===== {{ item.item.name }} — License Info =====
+          {{ item.stdout | default('UNREACHABLE') }}
+      loop: "{{ license_results.results }}"
