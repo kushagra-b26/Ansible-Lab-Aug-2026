@@ -1,0 +1,22 @@
+version: 0.2
+
+env:
+  parameter-store:
+    SSH_KEY: "/cicd/ansible/ssh_private_key"
+    ANSIBLE_HOST: "/cicd/ansible/host"
+    ANSIBLE_PORT: "/cicd/ansible/port"
+    ANSIBLE_USER: "/cicd/ansible/user"
+
+phases:
+  build:
+    commands:
+      # 1. Setup SSH key to reach your server through ngrok
+      - mkdir -p ~/.ssh
+      - echo "$SSH_KEY" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - echo "StrictHostKeyChecking no" > ~/.ssh/config
+      
+      # 2. Connect to your server and trigger the Ansible Tower Job Template
+      - echo "Triggering Ansible Tower Job Template 15..."
+      - ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST "tower-cli job launch --job-template=15 -v"
+      - echo "Tower Job triggered successfully!"
