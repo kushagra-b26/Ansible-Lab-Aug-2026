@@ -18,5 +18,5 @@ phases:
       
       # 2. Connect to your server and trigger the Ansible Tower Job Template
       - echo "Triggering Ansible Tower Job Template 7..."
-      - ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST "export PATH=\$PATH:\$HOME/.local/bin && tower-cli job launch --job-template=7 -v"
+      - ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST "bash -lc 'tower-cli job launch --job-template=7 -v'"
       - echo "Tower Job triggered successfully!"
