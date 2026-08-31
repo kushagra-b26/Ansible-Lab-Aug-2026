@@ -1,0 +1,68 @@
+---
+- name: Discover Unused Check Point Rules (Using Inventory)
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: 1. Build Gateway List from Inventory Group
+      set_fact:
+        # This reads all hostnames in the provided group and creates a list
+        gateway_names: "{{ groups[gateway_group] }}"
+
+    - name: 2. Login to Check Point API
+      uri:
+        url: "https://{{ lookup('env', 'CP_MGMT') }}/web_api/login"
+        method: POST
+        body_format: json
+        body:
+          user: "{{ lookup('env', 'CP_USER') }}"
+          password: "{{ lookup('env', 'CP_PASS') }}"
+          domain: "{{ lookup('env', 'CP_DOMAIN') }}"
+        validate_certs: no
+      register: cp_login
+
+    - name: Save SID and headers
+      set_fact:
+        cp_sid: "{{ cp_login.json.sid }}"
+        cp_headers:
+          X-chkp-sid: "{{ cp_login.json.sid }}"
+          Content-Type: application/json
+
+    - name: 3. Get Hit Count for Rules (Across Inventory Group)
+      uri:
+        url: "https://{{ lookup('env', 'CP_MGMT') }}/web_api/show-hit-count"
+        method: POST
+        headers: "{{ cp_headers }}"
+        body_format: json
+        body:
+          "policy-package": "{{ policy_name }}"
+          "target": "{{ gateway_names }}"
+        validate_certs: no
+      register: hitcount_response
+
+    - name: 4. Sum hits across all gateways and find 0-hit rules
+      set_fact:
+        unused_rules: >-
+          {%
+            set unused = [];
+            for rule_name, hits in (hitcount_response.json['rulebase-hit-count'] | groupby('rule-name')):
+              if (hits | map(attribute='hits') | sum) == 0:
+                unused.append(rule_name)
+            ;
+            unused
+          %}
+
+    - name: 5. Display Unused Rules
+      debug:
+        msg: >-
+          Policy Package: {{ policy_name }} | Gateways Checked: {{ gateway_names | length }} 
+          Unused Rules: {{ unused_rules }}
+
+    - name: 6. Logout from Check Point API
+      uri:
+        url: "https://{{ lookup('env', 'CP_MGMT') }}/web_api/logout"
+        method: POST
+        headers: "{{ cp_headers }}"
+        body_format: json
+        validate_certs: no
+      when: cp_login is succeeded
