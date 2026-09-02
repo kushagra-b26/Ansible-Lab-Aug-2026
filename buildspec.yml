@@ -18,7 +18,7 @@ phases:
       
       # 2. Copy the playbook AND the inventory file to the remote server
       - echo "Copying Ansible playbook and inventory to remote server..."
-      - scp -P $ANSIBLE_PORT cp_discover_unused_rules.yml inventory.ini $ANSIBLE_USER@$ANSIBLE_HOST:/tmp/
+      - scp -P $ANSIBLE_PORT cp_discover_unused_rules.yml inventory_checkpoint1.ini $ANSIBLE_USER@$ANSIBLE_HOST:/tmp/
       
       # 3. Connect and run the playbook using the inventory file
       - echo "Executing Ansible Playbook on remote server..."
