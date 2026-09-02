@@ -10,13 +10,12 @@ env:
 phases:
   build:
     commands:
-      # 1. Setup SSH key to reach your AWX server
       - mkdir -p ~/.ssh
       - echo "$SSH_KEY" > ~/.ssh/id_rsa
       - chmod 600 ~/.ssh/id_rsa
       - echo "StrictHostKeyChecking no" > ~/.ssh/config
       
-      # 2. Trigger the AWX API to run the Job Template
       - echo "Triggering AWX Job Template..."
-      - ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST 'curl -k -u admin:admin123 -X POST http://192.168.1.15:32000/api/v2/job_templates/12/launch/ --data "{}" -H "Content-Type: application/json"'
+      # Notice the double quotes around the whole command, and the backslashes \ before the inner quotes
+      - "ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST 'curl -k -u admin:admin123 -X POST http://192.168.1.15:32000/api/v2/job_templates/9/launch/ --data \"{}\" -H \"Content-Type: application/json\"'"
       - echo "AWX Job triggered successfully!"
