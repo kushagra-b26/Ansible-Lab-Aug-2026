@@ -11,12 +11,12 @@
 
     - name: 2. Login to Check Point API
       uri:
-        url: "https://{{ lookup('env', 'CP_MGMT') }}/web_api/login"
+        url: "https://{{ CP_MGMT }}/web_api/login"
         method: POST
         body_format: json
         body:
-          user: "{{ lookup('env', 'CP_USER') }}"
-          password: "{{ lookup('env', 'CP_PASS') }}"
+          user: "{{ CP_USER }}"
+          password: "{{ CP_PASS }}"
         validate_certs: no
       register: cp_login
 
@@ -29,7 +29,7 @@
 
     - name: 3. Get Hit Count for Rules (Across Inventory Group)
       uri:
-        url: "https://{{ lookup('env', 'CP_MGMT') }}/web_api/show-hit-count"
+        url: "https://{{ CP_MGMT }}/web_api/show-hit-count"
         method: POST
         headers: "{{ cp_headers }}"
         body_format: json
@@ -59,7 +59,7 @@
 
     - name: 6. Logout from Check Point API
       uri:
-        url: "https://{{ lookup('env', 'CP_MGMT') }}/web_api/logout"
+        url: "https://{{ CP_MGMT }}/web_api/logout"
         method: POST
         headers: "{{ cp_headers }}"
         body_format: json
