@@ -17,7 +17,6 @@
         body:
           user: "{{ lookup('env', 'CP_USER') }}"
           password: "{{ lookup('env', 'CP_PASS') }}"
-          domain: "{{ lookup('env', 'CP_DOMAIN') }}"
         validate_certs: no
       register: cp_login
 
