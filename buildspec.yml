@@ -22,5 +22,5 @@ phases:
       
       # 3. Connect and run the playbook using the inventory file
       - echo "Executing Ansible Playbook on remote server..."
-      - ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST 'ansible-playbook /tmp/cp_discover_unused_rules.yml -i /tmp/cp_discover_unused_rules.ini -e "gateway_group=CP_Gateways policy_name=Standard_Policy"'
+      - ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST 'ansible-playbook /tmp/cp_discover_unused_rules.yml -i /tmp/inventory_checkpoint1.ini -e "gateway_group=gateways policy_name=Standard_Policy"'
       - echo "Playbook executed successfully!"
