@@ -10,13 +10,17 @@ env:
 phases:
   build:
     commands:
-      # 1. Setup SSH key to reach your server through ngrok
+      # 1. Setup SSH key to reach your server
       - mkdir -p ~/.ssh
       - echo "$SSH_KEY" > ~/.ssh/id_rsa
       - chmod 600 ~/.ssh/id_rsa
       - echo "StrictHostKeyChecking no" > ~/.ssh/config
       
-      # 2. Connect to your server and trigger the Ansible Tower Job Template using curl
-      - echo "Triggering Ansible Tower Job Template 7..."
-      - ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST 'curl -k -u admin:admin123 -X POST http://192.168.1.15:32000/api/v2/job_templates/7/launch/'
-      - echo "Tower Job triggered successfully!"
+      # 2. Copy the new playbook to the remote Ansible server
+      - echo "Copying Ansible playbook to remote server..."
+      - scp -P $ANSIBLE_PORT cp_discover_unused_rules.yml $ANSIBLE_USER@$ANSIBLE_HOST:/tmp/cp_discover_unused_rules.yml
+      
+      # 3. Connect to your server and run the playbook
+      - echo "Executing Ansible Playbook on remote server..."
+      - ssh -p $ANSIBLE_PORT $ANSIBLE_USER@$ANSIBLE_HOST 'ansible-playbook /tmp/cp_discover_unused_rules.yml -i localhost,'
+      - echo "Playbook executed successfully!"
