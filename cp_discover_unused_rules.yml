@@ -9,6 +9,7 @@
         # Using default to prevent errors if the group is empty
         gateway_names: "{{ groups[gateway_group] | default([]) }}"
 
+
     - name: 2. Login to Check Point API
       uri:
         url: "https://{{ checkpoint_mgmt_ip }}/web_api/login"
