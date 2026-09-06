@@ -6,17 +6,18 @@
   tasks:
     - name: 1. Build Gateway List from Inventory Group
       set_fact:
-        # This reads all hostnames in the provided group and creates a list
-        gateway_names: "{{ groups[gateway_group] }}"
+        # Using default to prevent errors if the group is empty
+        gateway_names: "{{ groups[gateway_group] | default([]) }}"
 
     - name: 2. Login to Check Point API
       uri:
-        url: "https://{{ CP_MGMT }}/web_api/login"
+        url: "https://{{ checkpoint_mgmt_ip }}/web_api/login"
         method: POST
         body_format: json
         body:
-          user: "{{ CP_USER }}"
-          password: "{{ CP_PASS }}"
+          # AWX Machine credentials inject these automatically:
+          user: "{{ ansible_user }}"       
+          password: "{{ ansible_password }}" 
         validate_certs: no
       register: cp_login
 
@@ -29,7 +30,7 @@
 
     - name: 3. Get Hit Count for Rules (Across Inventory Group)
       uri:
-        url: "https://{{ CP_MGMT }}/web_api/show-hit-count"
+        url: "https://{{ checkpoint_mgmt_ip }}/web_api/show-hit-count"
         method: POST
         headers: "{{ cp_headers }}"
         body_format: json
@@ -59,7 +60,7 @@
 
     - name: 6. Logout from Check Point API
       uri:
-        url: "https://{{ CP_MGMT }}/web_api/logout"
+        url: "https://{{ checkpoint_mgmt_ip }}/web_api/logout"
         method: POST
         headers: "{{ cp_headers }}"
         body_format: json
